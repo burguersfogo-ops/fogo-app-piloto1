@@ -422,7 +422,7 @@ async function syncQueue() {
     return;
   }
 
-  if (!GAS_URL.startsWith('https://script.google.com/macros/s/') || !GAS_URL.endsWith('/exec')) {
+  if (!GAS_URL.startsWith('https://script.google.com/macros/s/AKfycbyzgH1no8ZsVM3IlcMn5Hi-MB6spd26K6uYZqG6dLJyfzNP8L5uXFaPoxTHu8yrJmE/exec') || !GAS_URL.endsWith('/exec')) {
     toast('Revisa la URL de Apps Script.');
     document.getElementById('sync-status').textContent = 'La URL /exec no parece válida.';
     return;
