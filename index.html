@@ -1,467 +1,118 @@
-
 <!doctype html>
-<html lang="es" class="dark">
-<head>
+<html lang="es"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111f">
-<title>FOGO | Operaciones</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+<meta name="theme-color" content="#05080f">
+<title>FOGO OPS</title>
 <style>
-:root{color-scheme:dark}
-body{background:#07111f;color:#e5edf8;padding-bottom:100px}
-input,select,textarea{width:100%;background:#101e30;border:1px solid #26374d;border-radius:12px;padding:12px;font-size:14px}
-label{font-size:12px;color:#a8b8cc;display:block;margin-bottom:5px}
-button{cursor:pointer;touch-action:manipulation}
-.btn{border-radius:12px;padding:12px 14px;font-weight:700;background:#80d6b0;color:#061b17}
-.secondary{background:#1a2a40;color:#dce8f8}
-.card{background:#101e30;border:1px solid #1d3047;border-radius:16px;padding:15px}
-.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:#91a3ba;min-width:0;padding:8px 2px;border-radius:10px}
-.tab.active{color:#80d6b0;background:#102b2b}
-.tab span:first-child{font-size:22px}
-.hidden{display:none!important}
-</style>
-</head>
-<body class="max-w-xl mx-auto">
-
-<header class="sticky top-0 z-20 flex items-center justify-between px-4 py-4 border-b border-slate-800" style="background:#07111fee">
-  <div>
-    <div class="font-black tracking-widest">FOGO <span class="text-emerald-300">OPS</span></div>
-    <div class="text-xs text-slate-400">Piloto operativo · Dark Kitchen</div>
-  </div>
-  <div class="text-right">
-    <div id="net" class="text-xs text-emerald-300">● En línea</div>
-    <div class="text-xs text-slate-400"><span id="pending">0</span> pendientes</div>
-  </div>
-</header>
-
-<main class="p-4 space-y-4">
-
-  <div class="card flex items-center justify-between gap-3">
-    <div>
-      <div class="font-bold">Turno y responsable</div>
-      <div class="text-xs text-slate-400 mt-1">Se adjuntan a los nuevos registros</div>
-    </div>
-    <div class="w-1/2 space-y-2">
-      <select id="shift">
-        <option value="Apertura">Apertura</option>
-        <option value="Día">Día</option>
-        <option value="Cierre">Cierre</option>
-        <option value="Evento">Evento</option>
-      </select>
-      <input id="person" placeholder="Tu nombre" autocomplete="name">
-    </div>
-  </div>
-
-  <div class="card flex justify-between items-center gap-3">
-    <div>
-      <div class="font-bold">Sincronización</div>
-      <div id="sync-status" class="text-xs text-slate-400 mt-1">Los registros se guardan primero en este dispositivo.</div>
-    </div>
-    <button type="button" id="sync-btn" class="btn">Sincronizar</button>
-  </div>
-
-  <div id="app-error" class="hidden card text-sm text-red-300">
-    La aplicación detectó un error. Recarga la página y vuelve a probar.
-  </div>
-
-  <section id="production" class="view space-y-4">
-    <div>
-      <h1 class="text-2xl font-black">Producción</h1>
-      <p class="text-sm text-slate-400">Registra cantidades reales por puesto.</p>
-    </div>
-    <form id="prod-form" class="card space-y-3">
-      <div><label>Puesto / área</label>
-        <select name="area">
-          <option>Cocina</option><option>Plancha</option><option>Armado</option>
-          <option>Despacho</option><option>Producción</option><option>Eventos</option>
-        </select>
-      </div>
-      <div><label>Producto / tarea</label><input name="name" required placeholder="Ej. Medallones 120 g"></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Cantidad producida</label><input name="current" type="number" min="0.01" step="any" required></div>
-        <div><label>Meta del turno</label><input name="target" type="number" min="0" step="any" required></div>
-      </div>
-      <div><label>Unidad</label>
-        <select name="unit"><option>unidades</option><option>porciones</option><option>kg</option><option>litros</option><option>bandejas</option></select>
-      </div>
-      <button class="btn w-full" type="submit">Registrar producción</button>
-    </form>
-    <div id="prod-list" class="space-y-2"></div>
-  </section>
-
-  <section id="warehouse" class="view hidden space-y-4">
-    <div><h1 class="text-2xl font-black">Almacén y facturas</h1><p class="text-sm text-slate-400">Un registro por producto y comprobante.</p></div>
-    <form id="inv-form" class="card space-y-3">
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Proveedor</label><input name="proveedor" required></div>
-        <div><label>Factura / boleta</label><input name="nroFactura" required></div>
-      </div>
-      <div><label>Producto / insumo</label><input name="producto" required></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Cantidad</label><input name="cantidad" type="number" min="0.001" step="any" required></div>
-        <div><label>Unidad</label><select name="unidad"><option>kg</option><option>unidades</option><option>litros</option><option>cajas</option><option>bolsas</option><option>paquetes</option></select></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Costo total (S/)</label><input name="costoTotal" type="number" min="0" step="0.01" required></div>
-        <div><label>Comprobante</label><select name="estadoComprobante"><option>Recibido con comprobante</option><option>Foto WhatsApp</option><option>Pendiente de comprobante</option></select></div>
-      </div>
-      <button class="btn w-full" type="submit">Registrar ingreso</button>
-    </form>
-    <div id="inv-list" class="space-y-2"></div>
-  </section>
-
-  <section id="cash" class="view hidden space-y-4">
-    <div><h1 class="text-2xl font-black">Caja y conciliación</h1><p class="text-sm text-slate-400">Ingresos por canal y diferencia frente al esperado.</p></div>
-    <form id="cash-form" class="card space-y-3">
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Rappi (S/)</label><input name="rappi" type="number" min="0" step="0.01" value="0" required></div>
-        <div><label>PedidosYa (S/)</label><input name="pedidosya" type="number" min="0" step="0.01" value="0" required></div>
-        <div><label>Yape / Plin (S/)</label><input name="yape" type="number" min="0" step="0.01" value="0" required></div>
-        <div><label>Tarjetas (S/)</label><input name="tarjetas" type="number" min="0" step="0.01" value="0" required></div>
-        <div><label>Efectivo contado (S/)</label><input name="efectivo" type="number" min="0" step="0.01" value="0" required></div>
-        <div><label>Total esperado (S/)</label><input name="esperado" type="number" min="0" step="0.01" value="0" required></div>
-      </div>
-      <label>Observación / incidencia</label><textarea name="observacion" rows="2"></textarea>
-      <button class="btn w-full" type="submit">Registrar cierre de caja</button>
-    </form>
-    <div id="cash-list" class="space-y-2"></div>
-  </section>
-
-  <section id="events" class="view hidden space-y-4">
-    <div><h1 class="text-2xl font-black">Eventos</h1><p class="text-sm text-slate-400">Catering, pedidos corporativos y seguimiento de adelantos.</p></div>
-    <form id="event-form" class="card space-y-3">
-      <div><label>Cliente / empresa</label><input name="name" required></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Contacto</label><input name="phone" type="tel"></div>
-        <div><label>Fecha y hora</label><input name="time" type="datetime-local" required></div>
-      </div>
-      <div><label>Dirección / lugar</label><input name="address" required></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Total cotizado (S/)</label><input name="total" type="number" min="0" step="0.01" required></div>
-        <div><label>Adelanto (S/)</label><input name="paid" type="number" min="0" step="0.01" value="0" required></div>
-      </div>
-      <div><label>Estado</label><select name="status"><option>Consulta</option><option>Cotizado</option><option>Confirmado</option><option>En producción</option><option>Entregado</option><option>Cancelado</option></select></div>
-      <button class="btn w-full" type="submit">Registrar evento</button>
-    </form>
-    <div id="event-list" class="space-y-2"></div>
-  </section>
-
-  <section id="admin" class="view hidden space-y-4">
-    <div><h1 class="text-2xl font-black">Dashboard / Admin</h1><p class="text-sm text-slate-400">Resumen de registros capturados en este dispositivo; no es un panel consolidado del servidor.</p></div>
-    <div class="grid grid-cols-2 gap-3">
-      <div class="card"><div class="text-xs text-slate-400">Producción registrada</div><div id="k-prod" class="text-2xl font-black">0</div></div>
-      <div class="card"><div class="text-xs text-slate-400">Ingresos inventario</div><div id="k-inv" class="text-2xl font-black">S/ 0.00</div></div>
-      <div class="card"><div class="text-xs text-slate-400">Caja registrada</div><div id="k-cash" class="text-2xl font-black">S/ 0.00</div></div>
-      <div class="card"><div class="text-xs text-slate-400">Eventos registrados</div><div id="k-events" class="text-2xl font-black">0</div></div>
-    </div>
-    <form id="waste-form" class="card space-y-3">
-      <h2 class="font-bold">Registrar merma</h2>
-      <div><label>Insumo / producto</label><input name="producto" required></div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label>Cantidad</label><input name="cantidad" type="number" min="0.001" step="any" required></div>
-        <div><label>Unidad</label><input name="unidad" placeholder="kg, unid." required></div>
-      </div>
-      <div><label>Motivo</label><select name="motivo"><option>Vencimiento</option><option>Error de producción</option><option>Devolución</option><option>Daño / caída</option><option>Sobreproducción</option><option>Otro</option></select></div>
-      <button class="btn w-full" type="submit">Registrar merma</button>
-    </form>
-    <form id="shift-form" class="card space-y-3">
-      <h2 class="font-bold">Reporte de turno</h2>
-      <div><label>Resumen / incidencias</label><textarea name="resumen" rows="3" required></textarea></div>
-      <div><label>Pendientes para el siguiente turno</label><textarea name="pendientes" rows="2"></textarea></div>
-      <button class="btn w-full" type="submit">Enviar reporte</button>
-    </form>
-    <div class="card space-y-2">
-      <h2 class="font-bold">Auditoría local</h2>
-      <p class="text-xs text-slate-400">La pestaña no constituye un control de permisos.</p>
-      <button type="button" id="csv-btn" class="secondary w-full rounded-xl p-3">Exportar registros locales (CSV)</button>
-      <button type="button" id="retry-btn" class="secondary w-full rounded-xl p-3">Reintentar sincronización</button>
-    </div>
-  </section>
-</main>
-
-<nav class="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800" style="background:#07111ff5">
-  <div class="max-w-xl mx-auto grid grid-cols-5 py-2 px-1">
-    <button type="button" class="tab active" data-tab="production"><span class="material-symbols-outlined">restaurant</span>Producción</button>
-    <button type="button" class="tab" data-tab="warehouse"><span class="material-symbols-outlined">inventory_2</span>Almacén</button>
-    <button type="button" class="tab" data-tab="cash"><span class="material-symbols-outlined">point_of_sale</span>Caja</button>
-    <button type="button" class="tab" data-tab="events"><span class="material-symbols-outlined">event</span>Eventos</button>
-    <button type="button" class="tab" data-tab="admin"><span class="material-symbols-outlined">space_dashboard</span>Dashboard</button>
-  </div>
-</nav>
-
-<div id="toast" class="fixed top-20 left-4 right-4 z-50 hidden rounded-xl bg-slate-800 p-4 shadow-xl text-sm"></div>
-
+:root{--bg:#05080f;--cd:#0d1422;--ln:#1b2640;--tx:#f2f6ff;--mu:#8a97b5;--ac:#2f7bff;--ok:#2ecc8f;--er:#ff5c5c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,sans-serif;min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#app{max-width:560px;margin:0 auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+header b{font-size:20px;letter-spacing:.5px}header b span{color:var(--ac)}
+small,.mu{color:var(--mu);font-size:13px}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
+.chip{background:var(--cd);color:var(--mu);border:1px solid var(--ln);border-radius:20px;padding:8px 14px;font-size:14px}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--cd);border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2,.card h3{margin:0 0 6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tile{background:var(--cd);color:var(--tx);border:1px solid var(--ln);border-radius:14px;padding:18px 10px;font-size:15px}
+.tile.on{border-color:var(--ac)}
+input,select{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:10px;padding:12px;font-size:16px;margin:6px 0}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:10px;padding:12px 16px;width:100%;font-weight:600}
+.lnk{background:none;border:0;color:var(--ac);padding:6px 0}
+.er{color:var(--er)}.ok{color:var(--ok)}
+.badge{display:inline-block;background:var(--ln);border-radius:8px;padding:2px 8px;font-size:12px;color:var(--tx)}
+footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ac);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none}
+#toast.show{opacity:1}
+</style></head><body>
+<div id="app"></div><div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
-'use strict';
+// ====== CONFIGURACIÓN: pega aquí los dos datos de Supabase (Project Settings > API) ======
+const URL_SB = "https://mjxfohbtzqxydcnftond.supabase.co";
+const KEY_SB = "sb_publishable_c1YiME8yW93Sd6GqNVCJwg_DCWoA4I9";   // la "anon" o "publishable". NUNCA la "secret" ni "service_role"
+// =========================================================================================
 
-/* Usa aquí la URL /exec de tu despliegue vigente de Apps Script. */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxN-cyxPWd-ULN5bZlCO4XA_RHa0kNEN0XeLQujGSQDfMCClTLPo0dZFLVVvFsQ4Vdk/exec';
-const KEY = 'fogo_ops_v2';
+const $ = s => document.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ROLES = {admin:"Administrador", encargado:"Encargado de Operaciones", empleado:"Empleado"};
+const CTX = ["Local","DK","Producción","Evento"];
+const TODOS = ["admin","encargado","empleado"], GEST = ["admin","encargado"];
+const MODS = [["Tareas",TODOS],["Limpieza",TODOS],["Mermas",TODOS],["Inventario",GEST],["Eventos",GEST],["Compras",GEST],["Caja y pagos",["admin"]],["Personal",["admin"]]];
+let sb, yo, ctx = localStorage.getItem("ctx") || "Local";
 
-let db = load();
-let syncing = false;
+const lima = () => new Date().toLocaleString("es-PE",{timeZone:"America/Lima",weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+function toast(t){const e=$("#toast");e.textContent=t;e.className="show";setTimeout(()=>e.className="",2400)}
 
-function emptyDB() {
-  return {queue:[],production:[],inventory:[],cash:[],events:[],waste:[],shifts:[]};
+function login(msg=""){
+  $("#app").innerHTML=`<header><b>FOGO <span>OPS</span></b></header>
+  <form class=card id=f><h2>Ingresar</h2>
+  <input id=e type=email placeholder="Correo" autocomplete=username required>
+  <input id=p type=password placeholder="Contraseña" autocomplete=current-password required>
+  <p class=er id=m>${esc(msg)}</p><button class=btn>Entrar</button></form>`;
+  $("#f").onsubmit=async ev=>{ev.preventDefault();
+    const {error}=await sb.auth.signInWithPassword({email:$("#e").value.trim(),password:$("#p").value});
+    error?$("#m").textContent="Correo o contraseña incorrectos.":entrar()};
 }
 
-function load() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(KEY));
-    return saved && Array.isArray(saved.queue) ? {...emptyDB(),...saved} : emptyDB();
-  } catch (e) {
-    console.error('No se pudo leer la base local:', e);
-    return emptyDB();
-  }
+async function entrar(){
+  const {data:{user}}=await sb.auth.getUser();
+  const {data,error}=await sb.from("perfiles").select("*").eq("id",user.id).single();
+  if(error||!data||!data.activo){await sb.auth.signOut();return login("Tu cuenta no está activa. Habla con administración.")}
+  yo=data;home();
 }
 
-function persist() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(db));
-    document.getElementById('pending').textContent = db.queue.length;
-    renderDashboard();
-  } catch (e) {
-    console.error('No se pudo guardar localmente:', e);
-    toast('No se pudo guardar en este dispositivo.');
-  }
+function shell(inner){
+  $("#app").innerHTML=`<header><b>FOGO <span>OPS</span></b><small>${lima()} · Lima</small></header>
+  <nav class=chips>${CTX.map(c=>`<button class="chip ${c==ctx?"on":""}" data-c="${c}">${c}</button>`).join("")}</nav>
+  <main>${inner}</main>
+  <footer><small>${esc(yo.nombre)} · <span class=badge>${ROLES[yo.rol]}</span></small><button class=lnk id=out>Salir</button></footer>`;
+  document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ctx=b.dataset.c;localStorage.setItem("ctx",ctx);home()});
+  $("#out").onclick=async()=>{await sb.auth.signOut();login()};
 }
 
-function uid() {
-  return (window.crypto && crypto.randomUUID)
-    ? crypto.randomUUID()
-    : 'fogo-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+function home(){
+  shell(`<section class=card><h2>Ahora · ${esc(ctx)}</h2>
+  <p class=mu>Aquí aparecerán tus tareas (Bloque 2). Por ahora no hay datos de operación, ni reales ni de ejemplo.</p></section>
+  <div class=grid>${MODS.filter(m=>m[1].includes(yo.rol)).map(m=>`<button class=tile data-m="${m[0]}">${m[0]}</button>`).join("")}</div>
+  <section class=card><h3>Prueba de permisos</h3>
+  <p class=mu>Intenta subirte el rol a Administrador. Si no lo eres, la base de datos debe bloquearlo.</p>
+  <button class=btn id=t>Probar</button><p id=r></p></section>`);
+  document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>b.dataset.m=="Personal"?personal():toast("Disponible en un próximo bloque"));
+  $("#t").onclick=async()=>{
+    const {data,error}=await sb.from("perfiles").update({rol:"admin"}).eq("id",yo.id).select();
+    const r=$("#r");
+    if(error){r.className="ok";r.textContent="✓ Bloqueado: "+error.message}
+    else if(!data.length){r.className="ok";r.textContent="✓ Bloqueado por la base de datos"}
+    else if(yo.rol=="admin"){r.className="ok";r.textContent="Permitido: ya eres administrador."}
+    else{r.className="er";r.textContent="✗ FALLO DE SEGURIDAD: se pudo cambiar el rol. Avísame."}};
 }
 
-function getDevice() {
-  let x = localStorage.getItem('fogo_device');
-  if (!x) {
-    x = uid();
-    localStorage.setItem('fogo_device', x);
-  }
-  return x;
+async function personal(){
+  const {data,error}=await sb.from("perfiles").select("*").order("creado_en");
+  shell(`<button class=lnk id=b>← Volver</button><h2>Personal</h2>
+  ${error?`<p class=er>No se pudo cargar: ${esc(error.message)}</p>`:data.map(p=>`<div class=card>
+  <input value="${esc(p.nombre)}" data-id="${p.id}" data-k=nombre>
+  <small>${esc(p.email)}${p.id==yo.id?" · (tú)":""}</small>
+  <select data-id="${p.id}" data-k=rol ${p.id==yo.id?"disabled":""}>${Object.entries(ROLES).map(([k,v])=>`<option value=${k} ${k==p.rol?"selected":""}>${v}</option>`).join("")}</select>
+  <label><input type=checkbox style="width:auto" data-id="${p.id}" data-k=activo ${p.activo?"checked":""} ${p.id==yo.id?"disabled":""}> Activo</label></div>`).join("")}`);
+  $("#b").onclick=home;
+  $("main").onchange=async e=>{const t=e.target,id=t.dataset.id;if(!id)return;
+    const v=t.type=="checkbox"?t.checked:t.value;
+    const {data:d,error:er}=await sb.from("perfiles").update({[t.dataset.k]:v}).eq("id",id).select();
+    toast(er||!d.length?"No se pudo guardar":"Guardado")};
 }
 
-function base(type) {
-  return {
-    id: uid(),
-    type,
-    timestamp: new Date().toISOString(),
-    shift: document.getElementById('shift').value,
-    responsable: document.getElementById('person').value.trim() || 'Sin identificar',
-    deviceId: getDevice()
-  };
-}
-
-function val(form) {
-  return Object.fromEntries(new FormData(form).entries());
-}
-
-function num(x) { return Number(x) || 0; }
-function money(x) { return 'S/ ' + num(x).toFixed(2); }
-
-function toast(message) {
-  const el = document.getElementById('toast');
-  el.textContent = message;
-  el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 3000);
-}
-
-/* NAVEGACIÓN: botones conectados con addEventListener. */
-function go(id, btn) {
-  const target = document.getElementById(id);
-  if (!target) {
-    console.error('No existe la pestaña:', id);
-    return;
-  }
-
-  document.querySelectorAll('.view').forEach(section => section.classList.add('hidden'));
-  target.classList.remove('hidden');
-
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.classList.toggle('active', tab === btn);
-  });
-}
-
-document.querySelectorAll('.tab[data-tab]').forEach(btn => {
-  btn.addEventListener('click', () => go(btn.dataset.tab, btn));
-});
-
-document.getElementById('sync-btn').addEventListener('click', syncQueue);
-document.getElementById('retry-btn').addEventListener('click', syncQueue);
-document.getElementById('csv-btn').addEventListener('click', exportCSV);
-
-function add(type, record, collection) {
-  const r = {...base(type), ...record};
-  db[collection].unshift(r);
-  db.queue.push(r);
-  persist();
-  renderLists();
-  toast('Guardado en este dispositivo. Pendiente de sincronización.');
-  if (navigator.onLine) syncQueue();
-}
-
-document.getElementById('prod-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = val(e.target);
-  add('task', {...d, current:num(d.current), target:num(d.target), done:num(d.current)>=num(d.target)}, 'production');
-  e.target.reset();
-});
-
-document.getElementById('inv-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = val(e.target);
-  d.cantidad = num(d.cantidad);
-  d.costoTotal = num(d.costoTotal);
-  add('inventory_in', d, 'inventory');
-  e.target.reset();
-});
-
-document.getElementById('cash-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = val(e.target);
-  ['rappi','pedidosya','yape','tarjetas','efectivo','esperado'].forEach(k => d[k] = num(d[k]));
-  d.total = d.rappi + d.pedidosya + d.yape + d.tarjetas + d.efectivo;
-  d.diferencia = +(d.total - d.esperado).toFixed(2);
-  d.estado = Math.abs(d.diferencia) < 0.01 ? 'Cuadrada' : 'Revisar diferencia';
-  add('cash', d, 'cash');
-  e.target.reset();
-});
-
-document.getElementById('event-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = val(e.target);
-  d.total = num(d.total);
-  d.paid = num(d.paid);
-  d.balance = d.total - d.paid;
-  add('event', d, 'events');
-  e.target.reset();
-});
-
-document.getElementById('waste-form').addEventListener('submit', e => {
-  e.preventDefault();
-  const d = val(e.target);
-  d.cantidad = num(d.cantidad);
-  add('waste', d, 'waste');
-  e.target.reset();
-});
-
-document.getElementById('shift-form').addEventListener('submit', e => {
-  e.preventDefault();
-  add('shift_report', val(e.target), 'shifts');
-  e.target.reset();
-});
-
-function card(title, sub, right='') {
-  const d = document.createElement('div');
-  d.className = 'card flex justify-between gap-3';
-
-  const a = document.createElement('div');
-  const b = document.createElement('div');
-  const h = document.createElement('div');
-  h.className = 'font-bold text-sm';
-  h.textContent = title;
-
-  const p = document.createElement('div');
-  p.className = 'text-xs text-slate-400 mt-1';
-  p.textContent = sub;
-
-  a.append(h, p);
-  b.className = 'text-right text-sm text-emerald-300';
-  b.textContent = right;
-  d.append(a, b);
-  return d;
-}
-
-function renderLists() {
-  const p = document.getElementById('prod-list');
-  p.replaceChildren();
-  db.production.slice(0,30).forEach(x =>
-    p.append(card(x.name, `${x.area} · ${x.responsable} · ${x.shift}`, `${x.current}/${x.target} ${x.unit}`))
-  );
-
-  const i = document.getElementById('inv-list');
-  i.replaceChildren();
-  db.inventory.slice(0,30).forEach(x =>
-    i.append(card(x.producto, `${x.proveedor} · ${x.nroFactura} · ${x.cantidad} ${x.unidad}`, money(x.costoTotal)))
-  );
-
-  const c = document.getElementById('cash-list');
-  c.replaceChildren();
-  db.cash.slice(0,20).forEach(x =>
-    c.append(card(x.estado, `Total ${money(x.total)} · esperado ${money(x.esperado)}`, `Dif. ${money(x.diferencia)}`))
-  );
-
-  const ev = document.getElementById('event-list');
-  ev.replaceChildren();
-  db.events.slice(0,20).forEach(x =>
-    ev.append(card(x.name, `${x.time} · ${x.status} · saldo ${money(x.balance)}`, money(x.total)))
-  );
-}
-
-function renderDashboard() {
-  document.getElementById('k-prod').textContent =
-    db.production.reduce((s,x) => s + num(x.current), 0);
-
-  document.getElementById('k-inv').textContent =
-    money(db.inventory.reduce((s,x) => s + num(x.costoTotal), 0));
-
-  document.getElementById('k-cash').textContent =
-    money(db.cash.reduce((s,x) => s + num(x.total), 0));
-
-  document.getElementById('k-events').textContent = db.events.length;
-}
-
-async function syncQueue() {
-  if (syncing) return;
-
-  if (!db.queue.length) {
-    toast('No hay registros pendientes.');
-    document.getElementById('sync-status').textContent = 'Todo al día: no hay registros pendientes.';
-    return;
-  }
-
-  if (!GAS_URL.startsWith('https://script.google.com/macros/s/AKfycbyzgH1no8ZsVM3IlcMn5Hi-MB6spd26K6uYZqG6dLJyfzNP8L5uXFaPoxTHu8yrJmE/exec') || !GAS_URL.endsWith('/exec')) {
-    toast('Revisa la URL de Apps Script.');
-    document.getElementById('sync-status').textContent = 'La URL /exec no parece válida.';
-    return;
-  }
-
-  if (!navigator.onLine) {
-    toast('Sin conexión. Se conserva la cola local.');
-    return;
-  }
-
-  syncing = true;
-  document.getElementById('sync-status').textContent = 'Enviando registros…';
-  const batch = db.queue.slice(0,50);
-
-  try {
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({records:batch})
-    });
-
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-
-    const result = await response.json();
-    const acknowledged = new Set(
-      (result.results || [])
-        .filter(x => ['saved','already_exists'].includes(x.status))
-        .map(x => x.id)
-    );
-
-    if (!acknowledged.size) {
-      throw new Error(result.message || 'El servidor no confirmó registros.');
-    }
-
-    db.queue = db.queue.filter(x => !acknowledged.has(x.id));
-    persist();
-
-    const failed = (result.results || []).filter(x => x.status === 'error');
-    document.getElementById('sync-status').textContent =
-      `Confirmados ${acknowledged.size}; errores ${failed.length}; pendientes ${db.queue.length}.`;
-
-    toast(`Confirmados: ${acknowledged.size}. Pe
+(async()=>{
+  if(URL_SB.startsWith("PEGA")||KEY_SB.startsWith("PEGA")){
+    $("#app").innerHTML=`<section class=card><h2>Falta conectar Supabase</h2><p class=mu>Abre index.html y pega la URL y la clave pública en las dos primeras líneas del script.</p></section>`;return}
+  sb=supabase.createClient(URL_SB,KEY_SB);
+  const {data:{session}}=await sb.auth.getSession();
+  session?entrar():login();
+})();
+</script></body></html>
