@@ -78,12 +78,12 @@ function shell(inner){
 
 function home(){
   shell(`<section class=card><h2>Ahora · ${esc(ctx)}</h2>
-  <p class=mu>Aquí aparecerán tus tareas (Bloque 2). Por ahora no hay datos de operación, ni reales ni de ejemplo.</p></section>
+  <p class=mu>Abre Tareas para ver lo que hay que hacer en este contexto. Los demás módulos llegan en los próximos bloques.</p></section>
   <div class=grid>${MODS.filter(m=>m[1].includes(yo.rol)).map(m=>`<button class=tile data-m="${m[0]}">${m[0]}</button>`).join("")}</div>
   <section class=card><h3>Prueba de permisos</h3>
   <p class=mu>Intenta subirte el rol a Administrador. Si no lo eres, la base de datos debe bloquearlo.</p>
   <button class=btn id=t>Probar</button><p id=r></p></section>`);
-  document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>b.dataset.m=="Personal"?personal():toast("Disponible en un próximo bloque"));
+  document.querySelectorAll(".tile").forEach(b=>b.onclick=()=>({Personal:personal,Tareas:tareas}[b.dataset.m]||(()=>toast("Disponible en un próximo bloque")))());
   $("#t").onclick=async()=>{
     const {data,error}=await sb.from("perfiles").update({rol:"admin"}).eq("id",yo.id).select();
     const r=$("#r");
@@ -106,6 +106,43 @@ async function personal(){
     const v=t.type=="checkbox"?t.checked:t.value;
     const {data:d,error:er}=await sb.from("perfiles").update({[t.dataset.k]:v}).eq("id",id).select();
     toast(er||!d.length?"No se pudo guardar":"Guardado")};
+}
+
+const ESTC={pendiente:"Pendiente",en_curso:"En curso",completada:"Completada",vencida:"Vencida"};
+const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const fmt=d=>new Date(d).toLocaleString("es-PE",{timeZone:"America/Lima",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+
+async function tareas(){
+  await sb.rpc("generar_rutinas");
+  const gest=GEST.includes(yo.rol);
+  const [t,pf]=await Promise.all([
+    sb.from("tareas").select("*, asignado:perfiles!asignado_a(nombre)").eq("contexto",ctx).order("creado_en",{ascending:false}).limit(60),
+    gest?sb.from("perfiles").select("id,nombre").eq("activo",true):Promise.resolve({data:[]})]);
+  const ord={vencida:0,pendiente:1,en_curso:1,completada:2};
+  const lista=(t.data||[]).sort((a,b)=>ord[a.estado]-ord[b.estado]);
+  shell(`<button class=lnk id=b>← Volver</button><h2>Tareas · ${esc(ctx)}</h2>
+  ${gest?`<details class=card><summary>Nueva tarea</summary>
+  <input id=nt placeholder="¿Qué hay que hacer?">
+  <select id=ntipo><option value=p>Puntual</option><option value=d>Rutina diaria</option><option value=s>Rutina semanal</option></select>
+  <select id=nd>${DIAS.map((d,i)=>`<option value=${i+1}>${d} (rutina semanal)</option>`).join("")}</select>
+  <select id=na><option value="">Sin asignar</option>${pf.data.map(p=>`<option value=${p.id}>${esc(p.nombre)}</option>`).join("")}</select>
+  <select id=npr><option value=normal>Prioridad normal</option><option value=alta>Prioridad alta</option><option value=baja>Prioridad baja</option></select>
+  <input id=npl type=datetime-local>
+  <button class=btn id=ng>Crear</button></details>`:""}
+  ${t.error?`<p class=er>${esc(t.error.message)}</p>`:""}
+  ${lista.length?lista.map(x=>`<div class=card><b>${esc(x.titulo)}</b> <span class=badge>${ESTC[x.estado]}</span><br>
+  <small>${x.prioridad} · ${x.asignado?esc(x.asignado.nombre):"Sin asignar"}${x.plazo?" · "+fmt(x.plazo):""}${x.plantilla_id?" · rutina":""}</small>
+  ${x.estado!="completada"?`<button class=btn data-a=c data-id=${x.id}>Completar</button>`:""}
+  ${gest&&x.estado=="vencida"?`<button class=lnk data-a=t data-id=${x.id}>Trasladar a hoy</button>`:""}</div>`).join(""):`<p class=mu>No hay tareas en este contexto.</p>`}`);
+  $("#b").onclick=home;
+  $("main").onclick=async e=>{const a=e.target.dataset.a;if(!a)return;
+    const {error}=await sb.rpc(a=="c"?"completar_tarea":"trasladar_tarea",{tid:e.target.dataset.id});
+    error?toast(error.message):tareas()};
+  if(gest)$("#ng").onclick=async()=>{const titulo=$("#nt").value.trim();if(!titulo)return toast("Escribe la tarea");
+    const base={titulo,contexto:ctx,asignado_a:$("#na").value||null},tipo=$("#ntipo").value;
+    const r=tipo=="p"?await sb.from("tareas").insert({...base,prioridad:$("#npr").value,plazo:$("#npl").value?new Date($("#npl").value).toISOString():null})
+      :await sb.from("plantillas_tarea").insert({...base,periodicidad:tipo=="d"?"diaria":"semanal",dia_semana:+$("#nd").value});
+    r.error?toast(r.error.message):tareas()};
 }
 
 (async()=>{
